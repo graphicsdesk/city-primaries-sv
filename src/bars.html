@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wright Donor Groups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --surface: #ffffff;
+    --ink: #1d1d1f;
+    --ink-2: #55555c;
+    --rule: #deded9;
+    --axis: #a9a9a3;
+    --wright: #1f8a9e;
+    --highlight: #0d4a57;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font: 16px/1.45 Roboto, sans-serif;
+  }
+  h1 { margin: 0 0 6px; font-size: clamp(22px, 5vw, 30px); line-height: 1.2; text-wrap: balance; }
+  .subtitle { margin: 0; color: var(--ink-2); }
+
+  /* The scroller's height is set in the script: one screen, plus the sideways travel, plus a pause for each text card. */
+  #pin {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+  }
+  header { padding: 24px 16px 12px; }
+  #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  /* Matches the note on chevalier-map.html, but sits below the chart so it never covers the bar names. */
+  .note { margin: 0; padding: 0 16px 12px; color: #9b9ba0; font-size: 13px; }
+  #track { position: absolute; top: 0; left: 0; display: block; will-change: transform; }
+  #axis { position: absolute; top: 0; left: 0; display: block; background: var(--surface); }
+
+  .grid line { stroke: var(--rule); }
+  .baseline { stroke: var(--axis); }
+  .axis text { fill: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .axis path, .axis line { display: none; }
+  .bar { fill: var(--wright); }
+  .value { fill: var(--ink); font-size: 14px; font-weight: 600; text-anchor: middle; font-variant-numeric: tabular-nums; }
+  .name { fill: var(--ink-2); font-size: 14px; text-anchor: middle; }
+  .column { transition: opacity 200ms ease; }
+  .column .bar { transition: fill 200ms ease; }
+  .column.dim { opacity: 0.55; }
+  .column.focus .bar { fill: var(--highlight); }
+
+  /* Cards sit to the right of the chart on wide screens. CARD_SIDE_MIN in the script must match the breakpoint below. */
+  #cards { position: absolute; top: 16px; right: 56px; z-index: 2; width: 460px; pointer-events: none; }
+  .card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    font-size: 15px;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 250ms ease, transform 250ms ease;
+    pointer-events: none;
+  }
+  .card.active { opacity: 1; transform: none; pointer-events: auto; }
+  .card p { margin: 0; }
+  .card p + p { margin-top: 0.75em; }
+  .card a { color: #1a5fb4; text-decoration: none; }
+  .card a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 2px; }
+  /* On narrow screens the script moves the cards out of the chart, into their own strip above or below it. The hed, dek,
+     cards and labels shrink a little so the pinned hed, dek and note leave room for the bars. */
+  @media (max-width: 919px) {
+    header { padding: 14px 16px 8px; }
+    h1 { font-size: clamp(19px, 3.2vw, 26px); }
+    .subtitle { font-size: 14px; }
+    #cards { position: relative; top: auto; right: auto; width: auto; margin: 8px 16px; }
+    .card { padding: 12px 14px; font-size: 14px; line-height: 1.45; }
+    .name { font-size: 12px; }
+    .note { padding-bottom: 8px; font-size: 12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .column, .column .bar, .card { transition: none; }
+  }
+  @media (forced-colors: active) {
+    .bar { fill: CanvasText; }
+    .column.focus .bar { fill: Highlight; }
+    .card { border-color: CanvasText; }
+  }
+</style>
+</head>
+<body>
+<div id="scroller">
+  <div id="pin">
+    <header>
+      <h1>Wright received funding from 69 unique non-individual donors, constituting roughly a third of his total campaign funding</h1>
+      <p class="subtitle" id="subtitle">These donor groups include unions, political committees, and limited liability companies.</p>
+    </header>
+    <div id="stage">
+      <svg id="track"></svg>
+      <svg id="axis" aria-hidden="true"></svg>
+      <div id="cards" aria-live="polite"></div>
+    </div>
+    <p class="note">Note: Uncategorized non-individual donations were not included.</p>
+  </div>
+</div>
+
+<script>
+  // Copy of Campaign Funding - wright entities.csv, inlined so the page also works when opened directly from disk.
+  const CSV = `Contributor Name,SUM of Amount,Contributor Name Cleaned
+1199 SEIU-NYS Political Action Fund,"$3,000.00",1199 SEIU-NYS Political Action Fund
+32BJ United ADF,"$3,000.00",32BJ United American Dream Fund
+40 ACRES PAC,$500.00,40 Acres PAC
+65 SPRING PEALTY LLC,"$2,500.00",65 Spring Realty LLC
+BRICKLAYERS&ALLIED CRAFTWORKERS LOCAL 1,$500.00,Bricklayers and Allied Craftworkers Local 1
+BW PAC,"$2,350.00",Brown & Weinraub PAC
+CARTHAGE REAL ESTATE ADVISORS LLC,$250.00,Carthage Real Estate Advisors LLC
+CHARTER COMMUNICATIONS PAC,"$1,000.00",Charter Communications PAC
+CONVENIENCE,$250.00,Convenience PAC
+CORDO & COMPANY LLC PAC,$300.00,Cordo & Company LLC PAC
+COZEN O'CONNER PAC,"$1,500.00",Cozen O'Connor PAC
+Cse Political Action Fund,"$3,000.00",Civil Service Employees Political Action Fund
+Cwa District One Pac,$500.00,Communications Workers of America District 1 PAC
+DAVIDOFF HUTCHER CITRON LLP,"$1,000.00","Davidoff, Hutcher & Citron LLP"
+DEMOCRATS FOR EDUCATION REFORM,"$2,500.00",Democrats for Education Reform
+DISTRICT COUNCIL 37 PAC,"$2,500.00",District Council 37 PAC
+FEATHERSTONHAUGH CLYNE MCCARDLE LLP,$500.00,"Featherstonhaugh, Wiley & Clyne LLP"
+Friends Of Michaelle Solages,"$1,000.00",Friends Of Michaelle Solages
+GAI PAC,"$2,500.00",GAI PAC
+"GP CONSTRUCTION, LLC","$6,000.00",GP Construction LLC
+GREAT PUBLIC SCHOOL PAC,"$2,000.00",Great Public Schools PAC
+Greater Ny Auto Dealers Assoc Inc Pac,$250.00,Greater New York Automobile Dealers Association Inc. PAC
+GREENBERG TRAURIG PA PAC,"$1,000.00",Greenberg Traurig P.A. PAC
+HANYC PAC,"$1,000.00",Hotel Association of New York City PAC
+Healthcare Association of New York State PAC,"$2,000.00",Healthcare Association of New York State PAC
+HOME HEALTHCARE WORKERS OF AMERICA PA,"$3,000.00",Home Healthcare Workers of America PAC
+HOSPITAL ALLIANCE PAC,$500.00,Hospital Alliance PAC
+Ibew Ny Pac,$250.00,International Brotherhood of Electrical Workers New York PAC
+INTERNATL UNION OF JOURNEYMEN&ALLIED TRA,"$1,031.00",International Union of Journeymen and Allied Trades
+IUOE Local 30 State PAC,$250.00,International Union of Operating Engineers Local 30 State PAC
+JPMORGAN CHASE&CO PAC,"$1,250.00",JPMorgan Chase & Co. PAC
+"JUST LORRAINES PLACE TWO, LLC","$1,000.00",Just Lorraines Place Two LLC
+LATOYA JOYNER FOR ASSEMBLY ELECTION COMM,$375.00,Latoya Joyner For Assembly Election Committee
+LAWPAC of New York,"$2,000.00",LawPAC of New York
+Leadingage New York Pac,$600.00,LeadingAge New York PAC
+Local 6 Committee On Political Education,"$3,000.00",Local 6 Committee on Political Education
+MADISON SQ GARDEN NY PAC,"$3,000.00",Madison Square Garden New York PAC
+MANATTMPHELPS&PHILLIPS LLC,$250.00,"Manatt, Phelps & Phillips LLP"
+MANHATTAN BEER DISTRIBUTION LLC NYS PAC,"$3,500.00",Manhattan Beer Distribution LLC New York State PAC
+New York Bankers Pac,$500.00,New York Bankers PAC
+NEW YORK LEAGUE OF CONSERVATION VOTERS,$252.68,New York League Of Conservation Voters
+NEW YORK THOROUGHBRED HORSEMENS ASSOC,$250.00,New York Thoroughbred Horsemen's Association
+NEW YORK WORKING FAMILY,"$1,500.00",New York Working Family's Party
+NEW YORKERS FOR LOCALBUSINESSES PAC,"$1,500.00",New Yorkers for Local Businesses PAC
+NORTHEAST DAIRY PRODUCERS ASSOC PAC,$250.00,Northeast Dairy Producers Association PAC
+NY APARTMENT ASSOC PAC,"$1,000.00",New York Apartment Association PAC
+NYLCV GIVES GREEN,$250.00,NYLCV Gives Green
+Nys Afl-Cio Cope Account,"$3,000.00",New York State AFL-CIO Committee on Political Education
+NYSCORRECTIONALOFFICERS&POLICE PAC,$500.00,New York State Correctional Officers and Police Benevolent Association Inc. PAC
+NYSSCOA PAC,$500.00,New York State Supreme Court Officers Association PAC
+People for Diaz,$250.00,People for Diaz
+pfizer pac,$500.00,Pfizer PAC
+POST NY A LLIANCE PAC FUND,$250.00,Post New York Alliance PAC Fund
+Public Employees Federation,$500.00,Public Employees Federation
+Real Estate Board Pac,"$1,000.00",Real Estate Board PAC
+Soa Of Ny,$250.00,Standardbred Owners Association of New York
+SOCIALSERVICES EMPLOY UNION 371,$500.00,Social Service Employees Union Local 371
+Solidarity PAC Inc.,"$3,000.00",Solidarity PAC Inc.
+Speaker Heastie Pac,"$3,000.00",Speaker Heastie PAC
+Stand Up PAC,"$3,000.00",Stand Up PAC
+STATE STREET ASSOC PAC,"$2,000.00",State Street Associates PAC
+Studio Mechanics Local-52-PAC,$250.00,Studio Mechanics Local 52 PAC
+THE BUSINESS COUNCIL PAC INC,$531.00,The Business Council PAC Inc.
+The Elk Street Group Llc,$250.00,The Elk Street Group LLC
+Theatrical Teamsters Local 817 Pac Fund,$500.00,Theatrical Teamsters Local 817 PAC Fund
+Transport Workers Union Local 100,"$7,000.00",Transport Workers Union Local 100
+UNITED SERVICE WORKERS UNION,"$1,500.00",United Service Workers Union
+VOICE OF TEACHERS FOR EDUCATION,"$4,000.00",Voice of Teachers for Education
+YUSEF SALAAM 2025,$10.00,Yusef Salaam 2025
+Grand Total,"$98,699.68",`;
+
+  // Columns widen past the minimum until the longest single word in any name fits, so no word breaks across lines.
+  const MIN_NAME_WIDTH = 100;
+  const NAME_GAP = 12; // Space between neighboring names.
+  const BAR_SHARE = 0.57; // Bar width as a share of the column width.
+  const LINE_HEIGHT = 17;
+  const NARROW_LINE_HEIGHT = 15; // Names are 12px instead of 14px on narrow screens.
+  const MAX_NAME_LINES = 8;
+  const MIN_STAGE_HEIGHT = 200;
+  const CARD_SIDE_MIN = 920; // At this stage width and up, cards sit beside the chart instead of over it.
+  const CARD_SPACE = 460 + 56 + 16; // Card width, its right inset, and a gap before the highlighted columns.
+  const HOLD = 0.8; // Scrolling past one card takes this many screen heights.
+  const MIN_PAN = 0.3; // Moving between stops takes at least this many screen heights, even when the chart barely moves.
+  const NAME_OFFSET = 20; // From the baseline to the first line of a name.
+  const NARROW_CARDS = "below"; // Where cards go on phones and tablets: "above" or "below" the chart.
+  const margin = { top: 28, right: 24, left: 56 };
+
+  const curlyApostrophes = s => s.replace(/'/g, "’");
+  const parseMoney = s => parseFloat(s.replace(/[$,]/g, ""));
+  const money = d3.format("$,.0f");
+  const axisMoney = v => d3.format("$,.0f")(v);
+
+  const parsed = d3.csvParse(CSV);
+  const [nameColumn, amountColumn, cleanedColumn] = parsed.columns;
+  const entities = d3.sort(
+    parsed.filter(d => d[nameColumn] !== "Grand Total").map(d => ({ name: curlyApostrophes(d[cleanedColumn]), amount: parseMoney(d[amountColumn]) })),
+    (a, b) => d3.descending(a.amount, b.amount) || d3.ascending(a.name.toLowerCase(), b.name.toLowerCase())
+  );
+  const total = d3.sum(entities, d => d.amount);
+
+  // The chart pauses at each stop and shows its cards one at a time. Highlighted names must match the cleaned names in the CSV.
+  // Text comes from bars-text.md. A line break inside a card starts a new paragraph, and [text](url) makes a link.
+  // A stop with no highlighted names pauses partway between its neighbors.
+  const STOPS = [
+    {
+      highlight: ["Transport Workers Union Local 100", "GP Construction LLC", "Voice of Teachers for Education"],
+      cards: [
+        "His top donors, according to campaign finance records, include Transport Workers Union Local 100, a union representing over 40,000 transit workers in New York City; GP Construction, a construction company; and Voices of Teachers for Education, a PAC representing public school and higher education educators across New York state.",
+        "Donors’ interests overlap with several areas of Wright’s legislative work. Wright serves on the assembly’s transportation committee and five other standing committees, including those on economic development and banks. He has sponsored Bill [A04876](https://www.billtrack50.com/billdetail/1825061), which would introduce an interdisciplinary climate change curriculum in public schools, and has pushed for legislation on incarceration, education, healthcare, and affordable housing."
+      ]
+    },
+    {
+      highlight: ["GP Construction LLC"],
+      cards: [
+        "Some of those connections predate Wright’s own assembly career. His father, former Assembly member Keith Wright, chaired the state assembly’s housing committee before his current position as the chair of the Manhattan Democratic Party. Keith Wright has partnered in the past with Genesis Companies, the parent company of one of Wright’s top donors, GP Construction, on affordable housing projects in Harlem.",
+        "Wright has also made affordable housing a campaign priority. In June, he joined Mamdani at the ribbon-cutting for ANCP Morningside, a project that converted three formerly abandoned buildings into 36 permanently affordable co-op homes. The initiative also tapped Genesis Companies for the city’s Block by Block housing plan, a sweeping agenda launched by Mamdani’s administration to build 200,000 new affordable homes and preserve 200,000 more."
+      ]
+    },
+    {
+      highlight: ["Home Healthcare Workers of America PAC"],
+      cards: [
+        "The incumbent received PAC donations from 47 committees—more than Avila Chevalier and Northrup. Six of those PACs, including Home Healthcare Workers of America PAC, were based outside New York state."
+      ]
+    },
+    {
+      highlight: ["Stand Up PAC"],
+      cards: [
+        "Wright’s top PAC donors include groups that emphasize fighting division and extremism , such as Stand Up PAC, which promotes a politics of “hope and commonsense,” according to its website.\n“We identify leaders dedicated to fighting extremism, protecting our right to vote, and defending our democracy,” its mission statement reads."
+      ]
+    },
+    {
+      highlight: ["Speaker Heastie PAC", "Solidarity PAC Inc."],
+      cards: [
+        "Other major PAC donors include the Speaker Heastie PAC, associated with Assembly Speaker Carl Heastie, and Solidarity PAC."
+      ]
+    },
+    {
+      highlight: ["Solidarity PAC Inc."],
+      cards: [
+        "Solidarity PAC’s top donors have funneled money to support Wright’s state assembly race. In May, Adeena Rosen, the chair of Solidarity PAC and a Scarsdale, New York, resident with no known affiliation to Harlem, contributed $25,000 to Moving Harlem Forward, a super PAC formed to boost Wright in his primary against Blackburn, according to state campaign finance records. During the same period, Rosen donated $3,000 directly to Wright’s campaign.",
+        "Blackburn told Spectator in April that he suspected the super PAC could be helping with legal fees for the challenge against his signatures.",
+        "Wright’s policy platform does not refer to Israel and focuses instead on his position as a state lawmaker.",
+        "The assemblymember’s team did not respond to a request for comment on the role Moving Harlem Forward played in Wright’s campaign or his position on Israel."
+      ]
+    }
+  ];
+
+  STOPS.forEach(stop => {
+    stop.columns = stop.highlight.map(name => {
+      const index = entities.findIndex(d => d.name === name);
+      if (index < 0) console.warn(`Stop highlights "${name}", which is not in the data.`);
+      return index;
+    }).filter(index => index >= 0);
+  });
+
+  const scroller = document.getElementById("scroller");
+  const pin = document.getElementById("pin");
+  const stage = document.getElementById("stage");
+  const track = d3.select("#track");
+  const axis = d3.select("#axis");
+  let travel = 0;
+  let nameWidth = MIN_NAME_WIDTH;
+  let pitch = MIN_NAME_WIDTH + NAME_GAP;
+  let columns = d3.select(null);
+  let timeline = [];
+  let shown = null;
+
+  const cards = d3.select("#cards").selectAll(".card")
+    .data(STOPS.flatMap((stop, stopIndex) => stop.cards.map((text, cardIndex) => ({ stopIndex, cardIndex, text }))))
+    .join("div")
+    .attr("class", "card");
+  cards.selectAll("p")
+    .data(d => d.text.split("\n"))
+    .join("p")
+    .each(function(text) { addLinkedText(this, text); });
+
+  // Adds text to a paragraph, turning each [text](url) into a link that opens in a new tab.
+  function addLinkedText(node, text) {
+    let last = 0;
+    for (const match of text.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)) {
+      node.append(text.slice(last, match.index));
+      const link = document.createElement("a");
+      link.href = match[2];
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = match[1];
+      node.append(link);
+      last = match.index + match[0].length;
+    }
+    node.append(text.slice(last));
+  }
+
+  function roundedTop(x, width, top, bottom) {
+    const r = Math.min(4, bottom - top);
+    return `M${x},${bottom}V${top + r}Q${x},${top} ${x + r},${top}H${x + width - r}Q${x + width},${top} ${x + width},${top + r}V${bottom}Z`;
+  }
+
+  // Splits a name into lines that fit under its column, measured with the given text node. A single word wider than the
+  // column breaks mid-word.
+  function splitName(node, name) {
+    const label = d3.select(node);
+    const fits = text => {
+      label.text(text);
+      return node.getComputedTextLength() <= nameWidth;
+    };
+    const lines = [];
+    let line = "";
+    name.split(/\s+/).forEach(word => {
+      if (fits(line ? `${line} ${word}` : word)) {
+        line = line ? `${line} ${word}` : word;
+        return;
+      }
+      if (line) lines.push(line);
+      line = "";
+      for (const char of word) {
+        if (line && !fits(line + char)) {
+          lines.push(line);
+          line = char;
+        } else {
+          line += char;
+        }
+      }
+    });
+    if (line) lines.push(line);
+    return lines.slice(0, MAX_NAME_LINES);
+  }
+
+  function draw() {
+    const stageWidth = stage.clientWidth;
+    const height = Math.max(stage.clientHeight, MIN_STAGE_HEIGHT);
+
+    const probe = track.append("text").attr("class", "name");
+    const widestWord = d3.max(entities.flatMap(d => d.name.split(/\s+/)), word => {
+      probe.text(word);
+      return probe.node().getComputedTextLength();
+    });
+    nameWidth = Math.max(MIN_NAME_WIDTH, Math.ceil(widestWord));
+    pitch = nameWidth + NAME_GAP;
+    const barWidth = Math.round(pitch * BAR_SHARE);
+    const width = margin.left + entities.length * pitch + margin.right;
+
+    // Leave only as much room under the baseline as the longest name needs, plus its descenders.
+    entities.forEach(d => { d.lines = splitName(probe.node(), d.name); });
+    probe.remove();
+    const lineHeight = stageWidth < CARD_SIDE_MIN ? NARROW_LINE_HEIGHT : LINE_HEIGHT;
+    const baseline = height - (NAME_OFFSET + (d3.max(entities, d => d.lines.length) - 1) * lineHeight + 6);
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(entities, d => d.amount)])
+      .nice()
+      .range([baseline, margin.top]);
+
+    track.selectAll("*").remove();
+    track.attr("width", width).attr("height", height)
+      .attr("role", "img")
+      .attr("aria-label", `Column chart of donations from ${entities.length} non-individual donors to Wright, totaling ${money(total)}. The largest is ${entities[0].name} at ${money(entities[0].amount)}.`);
+
+    track.append("g")
+      .attr("class", "grid")
+      .selectAll("line")
+      .data(y.ticks(7).filter(Boolean))
+      .join("line")
+      .attr("x1", margin.left)
+      .attr("x2", width - margin.right)
+      .attr("y1", d => y(d))
+      .attr("y2", d => y(d));
+
+    const column = track.append("g").selectAll("g")
+      .data(entities)
+      .join("g")
+      .attr("class", "column")
+      .attr("transform", (d, i) => `translate(${margin.left + (i + 0.5) * pitch},0)`);
+
+    column.append("path")
+      .attr("class", "bar")
+      .attr("d", d => roundedTop(-barWidth / 2, barWidth, y(d.amount), baseline));
+
+    column.append("text")
+      .attr("class", "value")
+      .attr("y", d => y(d.amount) - 8)
+      .text(d => money(d.amount));
+
+    column.append("text")
+      .attr("class", "name")
+      .attr("y", baseline + NAME_OFFSET)
+      .selectAll("tspan")
+      .data(d => d.lines)
+      .join("tspan")
+      .attr("x", 0)
+      .attr("dy", (text, i) => i ? lineHeight : 0)
+      .text(text => text);
+
+    track.append("line")
+      .attr("class", "baseline")
+      .attr("x1", margin.left)
+      .attr("x2", width - margin.right)
+      .attr("y1", baseline)
+      .attr("y2", baseline);
+
+    // The axis sits on its own surface above the moving chart, so it stays put while the columns pass behind it.
+    axis.selectAll("*").remove();
+    axis.attr("width", margin.left).attr("height", height);
+    axis.append("g")
+      .attr("class", "axis")
+      .attr("transform", `translate(${margin.left - 4},0)`)
+      .call(d3.axisLeft(y).ticks(7).tickSize(0).tickPadding(4).tickFormat(axisMoney));
+
+    travel = Math.max(0, width - stageWidth);
+    columns = column;
+    shown = null;
+    buildTimeline(stageWidth);
+    update();
+  }
+
+  // Lays out the scroll as a list of segments: pans, where scrolling moves the chart sideways, and holds, where the chart
+  // stays put while one card is shown.
+  function buildTimeline(stageWidth) {
+    const screen = pin.clientHeight;
+    const [left, right] = stageWidth >= CARD_SIDE_MIN ? [margin.left, stageWidth - CARD_SPACE] : [margin.left, stageWidth];
+    const clamp = x => Math.min(travel, Math.max(0, x));
+    const inView = (indices, x) => indices.every(i => margin.left + i * pitch - x >= left && margin.left + (i + 1) * pitch - x <= right);
+
+    // Center each stop's columns in the space beside the cards, unless they are already in view from the last stop.
+    let last = 0;
+    STOPS.forEach(stop => {
+      if (!stop.columns.length) return;
+      const middle = margin.left + (d3.min(stop.columns) + d3.max(stop.columns) + 1) / 2 * pitch;
+      stop.x = inView(stop.columns, last) ? last : clamp(middle - (left + right) / 2);
+      last = stop.x;
+    });
+    STOPS.forEach((stop, i) => {
+      if (stop.columns.length) return;
+      const before = i > 0 ? STOPS[i - 1].x : 0;
+      const after = STOPS.slice(i + 1).find(s => s.columns.length)?.x ?? before;
+      stop.x = (before + after) / 2;
+    });
+
+    timeline = [];
+    let at = 0;
+    let x = 0;
+    const pan = (to, minimum) => {
+      const length = Math.max(minimum, Math.abs(to - x));
+      timeline.push({ type: "pan", start: at, end: at + length, from: x, to });
+      at += length;
+      x = to;
+    };
+    STOPS.forEach((stop, stopIndex) => {
+      pan(stop.x, screen * MIN_PAN);
+      stop.cards.forEach((text, cardIndex) => {
+        timeline.push({ type: "hold", start: at, end: at + screen * HOLD, x, stopIndex, cardIndex });
+        at += screen * HOLD;
+      });
+    });
+    pan(travel, screen * MIN_PAN);
+    scroller.style.height = `${screen + at}px`;
+  }
+
+  function show(stopIndex, cardIndex) {
+    const key = stopIndex === null ? null : `${stopIndex}-${cardIndex}`;
+    if (key === shown) return;
+    shown = key;
+    const highlighted = stopIndex === null ? [] : STOPS[stopIndex].columns;
+    cards.classed("active", d => d.stopIndex === stopIndex && d.cardIndex === cardIndex);
+    columns
+      .classed("focus", (d, i) => highlighted.includes(i))
+      .classed("dim", (d, i) => highlighted.length > 0 && !highlighted.includes(i));
+  }
+
+  function update() {
+    if (!timeline.length) return;
+    const scrolled = Math.max(0, -scroller.getBoundingClientRect().top);
+    const segment = timeline.find(s => scrolled < s.end) ?? timeline[timeline.length - 1];
+    if (segment.type === "pan") {
+      const progress = Math.min(1, (scrolled - segment.start) / (segment.end - segment.start));
+      track.style("transform", `translateX(${-(segment.from + (segment.to - segment.from) * progress)}px)`);
+      show(null, null);
+    } else {
+      track.style("transform", `translateX(${-segment.x}px)`);
+      show(segment.stopIndex, segment.cardIndex);
+    }
+  }
+
+  let scheduled = false;
+  window.addEventListener("scroll", () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      update();
+    });
+  }, { passive: true });
+
+  // On narrow screens the cards move out of the chart into a strip of their own, tall enough for the longest card so the
+  // chart doesn't jump between cards.
+  const cardsBox = document.getElementById("cards");
+  const narrowScreen = window.matchMedia(`(max-width: ${CARD_SIDE_MIN - 1}px)`);
+  function placeLayout() {
+    if (narrowScreen.matches) {
+      if (NARROW_CARDS === "above") stage.before(cardsBox);
+      else stage.after(cardsBox);
+    } else {
+      stage.append(cardsBox);
+    }
+    sizeCards();
+  }
+  function sizeCards() {
+    cardsBox.style.height = narrowScreen.matches ? `${d3.max(cards.nodes(), node => node.offsetHeight)}px` : "";
+  }
+  placeLayout();
+  narrowScreen.addEventListener("change", placeLayout);
+  window.addEventListener("resize", sizeCards);
+
+  let drawnSize = "";
+  new ResizeObserver(() => {
+    const size = `${stage.clientWidth}x${stage.clientHeight}`;
+    if (stage.clientWidth && size !== drawnSize) {
+      drawnSize = size;
+      draw();
+    }
+  }).observe(stage);
+
+  // Names and cards are measured, so measure again once Roboto has loaded.
+  document.fonts.load("12px Roboto").then(() => {
+    sizeCards();
+    if (drawnSize) draw();
+  });
+</script>
+</body>
+</html>

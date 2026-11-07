@@ -7,12 +7,186 @@
       "root": "./src/partials",
       "locals": {
         "top": [],
-        "body": [],
+        "body": [
+          {
+            "type": "text",
+            "value": "Newly elected candidates representing West Harlem at the state and federal levels looked beyond their districts for cash this midterm cycle."
+          },
+          {
+            "type": "text",
+            "value": "More than half of the campaign funds for Darializa Avila Chevalier, CC ’16, the democratic socialist who won New York’s 13th Congressional District on Tuesday, came from individual out-of-state donors, a Spectator analysis found."
+          },
+          {
+            "type": "text",
+            "value": "Avila Chevalier <a href=\"https://www.columbiaspectator.com/city-news/2026/11/03/darializa-avila-chevalier-cc-16-gaza-solidarity-encampment-organizer-to-represent-columbia-in-congress/\">won</a> her race Tuesday night, as did New York State Assembly member Jordan Wright and Eli Northrup, who <a href=\"https://www.columbiaspectator.com/city-news/2026/11/03/eli-northrup-secures-assembly-district-69-seat-jordan-wright-wins-reelection-for-district-70/\">represent</a> Districts 70 and 69, respectively. Following their victories, Spectator analyzed campaign finance records from the past election cycle to determine what share of contributions to candidates running for state assembly and congressional office in districts encompassing West Harlem came from outside New York state."
+          },
+          {
+            "type": "text",
+            "value": "While Wright and Northrup relied primarily on in-state donations, keeping their donor bases relatively close to home, out-of-state PACs also had a strong presence in these state assembly races. Wright received funding from Solidarity PAC, which supports candidates who serve New York’s Jewish community and combat antisemitism. Solidarity PAC’s chairwoman poured money into Moving Harlem Forward, a super PAC formed to support Wright, Spectator found."
+          },
+          {
+            "type": "text",
+            "value": "<b>Darializa Avila Chevalier, NY-13</b>"
+          },
+          {
+            "type": "graphic",
+            "value": {
+              "asset": "map.html"
+            }
+          },
+          {
+            "type": "text",
+            "value": "While campaign fundraising now operates on a more national scale, political science professor Gregory Wawro said the amount of out-of-state money Avila Chevalier received was unprecedented."
+          },
+          {
+            "type": "text",
+            "value": "“It does strike me as unusual that an individual is making their first run for Congress to be receiving so much from outside the district,” Wawro said. Candidates usually receive out-of-state contributions on that scale when they are established members of the House, he added, such as those serving on prestigious committees with greater influence over national policy."
+          },
+          {
+            "type": "text",
+            "value": "Wawro said he would not be surprised if much of the out-of-state money came from small-dollar donations fueled by enthusiasm for the democratic socialist movement."
+          },
+          {
+            "type": "text",
+            "value": "“There are people who are excited about this movement, and they want to support it,” Wawro said. “They may not have this happening in their own state or district, but this gives them the opportunity to participate in a broader national movement that they identify with.”"
+          },
+          {
+            "type": "text",
+            "value": "The ideological motivation driving donors appears to extend to PACs. Avila Chevalier received contributions from seven out-of-state PACs, according to federal data, several of which back candidates supporting Palestinian rights and have donated thousands of dollars to her campaign."
+          },
+          {
+            "type": "text",
+            "value": "These include the A New Policy PAC, founded by two officials from former President Joe Biden’s administration who resigned over U.S. policy toward Israel; the PAC donated $6,800 to Avila Chevalier’s campaign. The Peace, Accountability, and Leadership PAC, founded as a counterweight to the American Israel Public Affairs Committee, contributed another $5,000. The PAC has backed prominent lawmakers including Reps. Rashida Tlaib (D-Mich.) and Ilhan Omar (D-Minn.)."
+          },
+          {
+            "type": "text",
+            "value": "Avila Chevalier has been outspoken in her support for Palestine, participating in pro-Palestinian protests at Columbia, including the April 2024 “Gaza Solidarity Encampment.” During the lead-up to the primaries, she attacked her opponent, Rep. Adriano Espaillat (D-N.Y.), since he “refused to show up” for Mahmoud Khalil, who she described as a friend, when he was detained by Immigration and Customs Enforcement agents."
+          },
+          {
+            "type": "text",
+            "value": "Avila Chevalier faced criticism from Espaillat for receiving support from American Priorities, a pro-Palestinian super PAC founded in 2026 to counter spending by pro-Israel lobbying groups such as AIPAC,  despite her campaign’s official policy stating that she does not accept corporate PAC money and opposes super PACs."
+          },
+          {
+            "type": "text",
+            "value": "According to independent expenditure records, the super PAC spent almost $600,000 to support Avila Chevalier."
+          },
+          {
+            "type": "text",
+            "value": "Avila Chevalier also received large contributions from the Avila Chevalier and Valdez Victory Fund, a joint fundraising committee that allows candidates to raise money together and distribute the proceeds between their campaigns and other participating political committees. Both candidates were endorsed by Mayor Zohran Mamdani."
+          },
+          {
+            "type": "text",
+            "value": "Avila Chevalier received contributions from 29 individuals who listed Columbia as their employer, according to FEC data."
+          },
+          {
+            "type": "text",
+            "value": "<b>Micah Lasher, NY-12</b>"
+          },
+          {
+            "type": "text",
+            "value": "Avila Chevalier’s out-of-state funds dwarf those of a neighboring congressional candidate, Micah Lasher, who was elected to represent New York’s 12th Congressional District on Tuesday. Around 13 percent of Lasher’s donors come from out of state, compared to Avila Chevalier’s roughly 54 percent, Spectator found."
+          },
+          {
+            "type": "text",
+            "value": "Lasher’s leading donor base contains eight members of the Tisch family. Six contributed $14,000 each, while two gave $7,000 each, according to New York State Board of Elections records."
+          },
+          {
+            "type": "text",
+            "value": "Lasher’s ties to the Tisch family include his warm welcome to New York City Police Department Commissioner Jessica Tisch to office in 2025. At a time when most coverage emphasized Tisch’s lack of experience as a police officer, Lasher publicly wondered whether she had reduced crime within her first seven weeks in office."
+          },
+          {
+            "type": "text",
+            "value": "“Enter Commissioner Tisch, like a hurricane,” Lasher <a href=\"https://substack.micahlasher.com/p/is-there-a-tisch-effect\">wrote</a> in January 2025 on his Substack. “She is unlike any of her modern predecessors, combining the freedom to operate, speak her mind, and take on sacred cows that comes from independent means, years of experience in Ray Kelly’s and Bill Bratton’s NYPD, and a reputation for tirelessness and disruptive drive that most recently had brought about a transformation at the Department of Sanitation.”"
+          },
+          {
+            "type": "text",
+            "value": "Lasher’s team did not respond to a request for comment on his relationship with the Tisch family or issues he would prioritize upon election to the House."
+          },
+          {
+            "type": "text",
+            "value": "<b>Jordan Wright, Assembly District 70</b>"
+          },
+          {
+            "type": "text",
+            "value": "The financial backing for Wright, who successfully defended his seat in Assembly District 70 on Tuesday, was largely homegrown."
+          },
+          {
+            "type": "text",
+            "value": "About 92 percent of the incumbent’s contributions from individual donors and around 91 percent of his individual donors during his campaign came from within New York state, Spectator found. Wright’s family has held political power in Harlem over three generations."
+          },
+          {
+            "type": "text",
+            "value": "Wright ran uncontested in the general election after winning his party primary in June, when he ousted challenger Conrad Blackburn by around 10 percentage points. Wright was the only New York state legislative candidate to hold onto his seat after facing a challenge from an opponent backed by the Democratic Socialists of America."
+          },
+          {
+            "type": "graphic",
+            "value": {
+              "asset": "bars.html"
+            }
+          },
+          {
+            "type": "text",
+            "value": "<b>Eli Northrup, Assembly District 69</b>"
+          },
+          {
+            "type": "text",
+            "value": "Northrup secured the open seat in Assembly District 69 on Tuesday, earning 98.7 percent of the votes for a district spanning Morningside Heights and much of the Upper West Side."
+          },
+          {
+            "type": "text",
+            "value": "Nearly 80 percent of the public defender’s donors came from within New York state, while about 20 percent came from out of state, according to NYSBOE data."
+          },
+          {
+            "type": "text",
+            "value": "“When you are new to politics and you’re trying to be able to put a campaign together, you really need to rely on everybody in your life that knows you and believes in you,” Northrup said in an interview with Spectator. “So, I have brought support from people in all areas of my life from growing up, from college, from law school, from the time beyond, as well as within the district and within the neighborhood.”"
+          },
+          {
+            "type": "text",
+            "value": "Northrup’s top donors include the Working Families Party. He was among the party’s first endorsements of the 2026 election cycle. The party also endorsed him in the 2024 Democratic primary for the same assembly seat, the same year it supported Mamdani, who ran for mayor on both the Democratic and Working Families Party lines."
+          },
+          {
+            "type": "text",
+            "value": "The endorsement was a “huge progressive validator for my campaign,” Northrup said. On the campaign trail, Northrup focused on building more affordable housing, defending New York against overreach from President Donald Trump and ICE, and implementing universal childcare and healthcare."
+          },
+          {
+            "type": "text",
+            "value": "Northrup received contributions from 15 PACs, all but two of which are based in New York state. His top donors include several groups representing tenants and organized labor, including Tenants PAC, which endorsed him; the New York City District Council of Carpenters PAC, the political arm of a union representing more than 20,000 workers across nine local unions; and the New York United Auto Workers Region 9A PAC Council."
+          },
+          {
+            "type": "text",
+            "value": "Fundraising, Northrup said, can deter qualified candidates from running because soliciting donations is intimidating. When he first considered running for office, he had to determine whether he could raise the $15,000 needed to get his campaign off the ground."
+          },
+          {
+            "type": "text",
+            "value": "Soliciting funds may not be as significant as the work of being a legislator, he added, but it takes political moxie."
+          },
+          {
+            "type": "text",
+            "value": "“It’s part of the job of being competitive,” Northrup said."
+          },
+          {
+            "type": "text",
+            "value": "<i>City News Editor Katharine Lee can be contacted at </i><a href=\"mailto:katharine.lee@columbiaspectator.com\"><i>katharine.lee@columbiaspectator.com</i></a><i>. Follow Spectator on X </i><a href=\"https://twitter.com/columbiaspec?lang=en\"><i>@ColumbiaSpec</i></a><i>.</i>"
+          },
+          {
+            "type": "text",
+            "value": "<i>Senior Data Visualization Reporter Sita Vemuri can be contacted at </i><a href=\"mailto:sita.vemuri@columbiaspectator.com\"><i>sita.vemuri@columbiaspectator.com</i></a><i>. Follow Spectator on X </i><a href=\"https://twitter.com/columbiaspec?lang=en\"><i>@ColumbiaSpec</i></a><i>.</i>"
+          },
+          {
+            "type": "text",
+            "value": "<b><i>Want to keep up with breaking news? Subscribe to our </i></b><a href=\"https://columbiaspectator.us4.list-manage.com/subscribe?u=a3d2eeb1ae5560ca04f82f042&id=e51c51d62d\"><b><i>email newsletter </i></b></a><b><i>and like Spectator on </i></b><a href=\"https://www.facebook.com/columbiaspectator\"><b><i>Facebook</i></b></a><b><i>.</i></b>"
+          }
+        ],
+        "headline": "Out-of-state donors funneled money into congressional  and state races in West Harlem",
+        "dek": "Darializa Avila Chevalier, CC ’16, received over half of her individual donations from out-of-state contributors—an unusual pattern for a first-time congressional candidate, an expert told Spectator.",
+        "date": "November 7, 2026",
+        "byline": "By <a href=\"https://www.columbiaspectator.com/contributors/katharine-lee/\">Katharine Lee</a>",
+        "byline2": "Graphics by <a href=\"https://www.columbiaspectator.com/contributors/sita-vemuri/\">Sita Vemuri</a>",
         "USE_NEWS_NAV": true,
         "USE_EYE_NAV": false,
         "USE_COVER_HED": false,
         "IS_EMBED": false,
-        "DOC_URL": null
+        "DOC_URL": "https://docs.google.com/document/d/1EKoqNLd4ceYA9H6ltiKJvMPq12QhBOZHaB0DHQdlrJM/edit?tab=t.0"
       }
     }
   }
