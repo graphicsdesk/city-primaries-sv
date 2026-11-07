@@ -9,7 +9,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <style>
-  :root {
+  /* Everything is scoped under .bars-embed so the chart can be included in the article without its styles leaking out. */
+  .bars-embed {
     color-scheme: light;
     --surface: #ffffff;
     --ink: #1d1d1f;
@@ -18,50 +19,49 @@
     --axis: #a9a9a3;
     --wright: #1f8a9e;
     --highlight: #0d4a57;
-  }
-
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
+    /* In the article the fixed navbar covers the top of the screen; on its own the page has no navbar. */
+    --bars-top: var(--navbar-height, 0px);
     background: var(--surface);
     color: var(--ink);
     font: 16px/1.45 Roboto, sans-serif;
   }
-  h1 { margin: 0 0 6px; font-size: clamp(22px, 5vw, 30px); line-height: 1.2; text-wrap: balance; }
-  .subtitle { margin: 0; color: var(--ink-2); }
+  body { margin: 0; }
+  .bars-embed, .bars-embed * { box-sizing: border-box; }
+  .bars-embed h1 { margin: 0 0 6px; color: var(--ink); font: 700 clamp(22px, 5vw, 30px)/1.2 Roboto, sans-serif; text-wrap: balance; }
+  .bars-embed .subtitle { margin: 0; color: var(--ink-2); font: inherit; }
 
   /* The scroller's height is set in the script: one screen, plus the sideways travel, plus a pause for each text card. */
-  #pin {
+  .bars-embed #pin {
     position: sticky;
-    top: 0;
+    top: var(--bars-top);
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: 100svh;
+    height: calc(100vh - var(--bars-top));
+    height: calc(100svh - var(--bars-top));
     overflow: hidden;
   }
-  header { padding: 24px 16px 12px; }
-  #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  .bars-embed header { padding: 24px 16px 12px; }
+  .bars-embed #stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
   /* Matches the note on chevalier-map.html, but sits below the chart so it never covers the bar names. */
-  .note { margin: 0; padding: 0 16px 12px; color: #9b9ba0; font-size: 13px; }
-  #track { position: absolute; top: 0; left: 0; display: block; will-change: transform; }
-  #axis { position: absolute; top: 0; left: 0; display: block; background: var(--surface); }
+  .bars-embed .note { margin: 0; padding: 0 16px 12px; color: #9b9ba0; font: 13px/1.45 Roboto, sans-serif; }
+  .bars-embed #track { position: absolute; top: 0; left: 0; display: block; will-change: transform; }
+  .bars-embed #axis { position: absolute; top: 0; left: 0; display: block; background: var(--surface); }
 
-  .grid line { stroke: var(--rule); }
-  .baseline { stroke: var(--axis); }
-  .axis text { fill: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
-  .axis path, .axis line { display: none; }
-  .bar { fill: var(--wright); }
-  .value { fill: var(--ink); font-size: 14px; font-weight: 600; text-anchor: middle; font-variant-numeric: tabular-nums; }
-  .name { fill: var(--ink-2); font-size: 14px; text-anchor: middle; }
-  .column { transition: opacity 200ms ease; }
-  .column .bar { transition: fill 200ms ease; }
-  .column.dim { opacity: 0.55; }
-  .column.focus .bar { fill: var(--highlight); }
+  .bars-embed .grid line { stroke: var(--rule); }
+  .bars-embed .baseline { stroke: var(--axis); }
+  .bars-embed .axis text { fill: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .bars-embed .axis path, .bars-embed .axis line { display: none; }
+  .bars-embed .bar { fill: var(--wright); }
+  .bars-embed .value { fill: var(--ink); font-size: 14px; font-weight: 600; text-anchor: middle; font-variant-numeric: tabular-nums; }
+  .bars-embed .name { fill: var(--ink-2); font-size: 14px; text-anchor: middle; }
+  .bars-embed .column { transition: opacity 200ms ease; }
+  .bars-embed .column .bar { transition: fill 200ms ease; }
+  .bars-embed .column.dim { opacity: 0.55; }
+  .bars-embed .column.focus .bar { fill: var(--highlight); }
 
   /* Cards sit to the right of the chart on wide screens. CARD_SIDE_MIN in the script must match the breakpoint below. */
-  #cards { position: absolute; top: 16px; right: 56px; z-index: 2; width: 460px; pointer-events: none; }
-  .card {
+  .bars-embed #cards { position: absolute; top: 16px; right: 56px; z-index: 2; width: 460px; pointer-events: none; }
+  .bars-embed .card {
     position: absolute;
     top: 0;
     left: 0;
@@ -78,34 +78,37 @@
     transition: opacity 250ms ease, transform 250ms ease;
     pointer-events: none;
   }
-  .card.active { opacity: 1; transform: none; pointer-events: auto; }
-  .card p { margin: 0; }
-  .card p + p { margin-top: 0.75em; }
-  .card a { color: #1a5fb4; text-decoration: none; }
-  .card a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 2px; }
+  .bars-embed .card.active { opacity: 1; transform: none; pointer-events: auto; }
+  /* Card text uses the article's body font and color, at the card's own size. */
+  .bars-embed .card p { margin: 0; color: #121212; font-family: var(--georgia, Georgia, serif); -webkit-font-smoothing: antialiased; }
+  .bars-embed .card p + p { margin-top: 0.75em; }
+  .bars-embed .card a { color: #337ab7; text-decoration: none; }
+  .bars-embed .card a:hover { color: #23527c; text-decoration: underline; }
+  .bars-embed .card a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 2px; }
   /* On narrow screens the script moves the cards out of the chart, into their own strip above or below it. The hed, dek,
      cards and labels shrink a little so the pinned hed, dek and note leave room for the bars. */
   @media (max-width: 919px) {
-    header { padding: 14px 16px 8px; }
-    h1 { font-size: clamp(19px, 3.2vw, 26px); }
-    .subtitle { font-size: 14px; }
-    #cards { position: relative; top: auto; right: auto; width: auto; margin: 8px 16px; }
-    .card { padding: 12px 14px; font-size: 14px; line-height: 1.45; }
-    .name { font-size: 12px; }
-    .note { padding-bottom: 8px; font-size: 12px; }
+    .bars-embed header { padding: 14px 16px 8px; }
+    .bars-embed h1 { font-size: clamp(19px, 3.2vw, 26px); }
+    .bars-embed .subtitle { font-size: 14px; }
+    .bars-embed #cards { position: relative; top: auto; right: auto; width: auto; margin: 8px 16px; }
+    .bars-embed .card { padding: 12px 14px; font-size: 14px; line-height: 1.45; }
+    .bars-embed .name { font-size: 12px; }
+    .bars-embed .note { padding-bottom: 8px; font-size: 12px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .column, .column .bar, .card { transition: none; }
+    .bars-embed .column, .bars-embed .column .bar, .bars-embed .card { transition: none; }
   }
   @media (forced-colors: active) {
-    .bar { fill: CanvasText; }
-    .column.focus .bar { fill: Highlight; }
-    .card { border-color: CanvasText; }
+    .bars-embed .bar { fill: CanvasText; }
+    .bars-embed .column.focus .bar { fill: Highlight; }
+    .bars-embed .card { border-color: CanvasText; }
   }
 </style>
 </head>
 <body>
+<div class="bars-embed">
 <div id="scroller">
   <div id="pin">
     <header>
@@ -120,8 +123,10 @@
     <p class="note">Note: Uncategorized non-individual donations were not included.</p>
   </div>
 </div>
+</div>
 
 <script>
+(() => {
   // Copy of Campaign Funding - wright entities.csv, inlined so the page also works when opened directly from disk.
   const CSV = `Contributor Name,SUM of Amount,Contributor Name Cleaned
 1199 SEIU-NYS Political Action Fund,"$3,000.00",1199 SEIU-NYS Political Action Fund
@@ -456,7 +461,8 @@ Grand Total,"$98,699.68",`;
     STOPS.forEach((stop, i) => {
       if (stop.columns.length) return;
       const before = i > 0 ? STOPS[i - 1].x : 0;
-      const after = STOPS.slice(i + 1).find(s => s.columns.length)?.x ?? before;
+      const next = STOPS.slice(i + 1).find(s => s.columns.length);
+      const after = next && next.x != null ? next.x : before;
       stop.x = (before + after) / 2;
     });
 
@@ -493,8 +499,9 @@ Grand Total,"$98,699.68",`;
 
   function update() {
     if (!timeline.length) return;
-    const scrolled = Math.max(0, -scroller.getBoundingClientRect().top);
-    const segment = timeline.find(s => scrolled < s.end) ?? timeline[timeline.length - 1];
+    const pinTop = parseFloat(getComputedStyle(pin).top) || 0;
+    const scrolled = Math.max(0, pinTop - scroller.getBoundingClientRect().top);
+    const segment = timeline.find(s => scrolled < s.end) || timeline[timeline.length - 1];
     if (segment.type === "pan") {
       const progress = Math.min(1, (scrolled - segment.start) / (segment.end - segment.start));
       track.style("transform", `translateX(${-(segment.from + (segment.to - segment.from) * progress)}px)`);
@@ -545,10 +552,11 @@ Grand Total,"$98,699.68",`;
   }).observe(stage);
 
   // Names and cards are measured, so measure again once Roboto has loaded.
-  document.fonts.load("12px Roboto").then(() => {
+  Promise.all([document.fonts.load("12px Roboto"), document.fonts.load("14px Georgia")]).then(() => {
     sizeCards();
     if (drawnSize) draw();
   });
+})();
 </script>
 </body>
 </html>

@@ -10,7 +10,8 @@
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <style>
-  :root {
+  /* Everything is scoped under .map-embed so the map can be included in the article without its styles leaking out. */
+  .map-embed {
     color-scheme: light;
     --surface: #ffffff;
     --ink: #1d1d1f;
@@ -22,25 +23,50 @@
     --outside: #7b55b8;
     --tip-bg: #1d1d1f;
     --tip-ink: #ffffff;
-  }
-
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--surface);
+    /* In the article the fixed navbar covers the top of the screen; on its own the page has no navbar. */
+    --map-top: var(--navbar-height, 0px);
     color: var(--ink);
     font: 16px/1.45 Roboto, sans-serif;
   }
+  body { margin: 0; }
+  .map-embed, .map-embed * { box-sizing: border-box; }
 
-  #scrolly { position: relative; }
-  .graphic { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
-  #map, #map svg { display: block; width: 100%; height: 100%; }
+  .map-embed #scrolly { position: relative; }
+  .map-embed .map-sticky {
+    position: sticky;
+    top: var(--map-top);
+    height: calc(100vh - var(--map-top));
+    height: calc(100svh - var(--map-top));
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .map-embed #map, .map-embed #map svg { display: block; width: 100%; height: 100%; }
 
   /* The steps scroll over the sticky map. Only the cards take pointer events, so the map stays hoverable around them. */
-  .steps { position: relative; margin-top: -100vh; margin-top: -100svh; pointer-events: none; }
+  .map-embed .steps {
+    position: relative;
+    margin-top: calc(-100vh + var(--map-top));
+    margin-top: calc(-100svh + var(--map-top));
+    pointer-events: none;
+  }
+  /* A screen of empty scroll after the last step keeps the zoomed-out map pinned until the last card has scrolled fully
+     off the top, so the article text only comes up once the card is gone. */
+  .map-embed .steps::after {
+    content: "";
+    display: block;
+    height: calc(100vh - var(--map-top));
+    height: calc(100svh - var(--map-top));
+  }
   /* On phones and tablets the cards sit low and centered, below the part of the screen the map focuses on and above the note. */
-  .step { display: flex; align-items: flex-end; justify-content: center; min-height: 100vh; min-height: 100svh; padding: 0 16px 72px; }
-  .card {
+  .map-embed .step {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: calc(100vh - var(--map-top));
+    min-height: calc(100svh - var(--map-top));
+    padding: 0 16px 72px;
+  }
+  .map-embed .card {
     width: min(360px, 100%);
     padding: 16px 20px;
     border: 1px solid #e2e2dc;
@@ -49,12 +75,13 @@
     box-shadow: 0 2px 12px rgb(0 0 0 / 0.08);
     pointer-events: auto;
   }
-  .card p { margin: 0; }
-  @media (max-width: 479px) { .card { padding: 14px 16px; font-size: 15px; } }
+  /* Card text uses the article's body font and color, at the card's own size. */
+  .map-embed .card p { margin: 0; color: #121212; font-family: var(--georgia, Georgia, serif); -webkit-font-smoothing: antialiased; }
+  @media (max-width: 479px) { .map-embed .card { padding: 14px 16px; font-size: 15px; } }
   /* On wide screens they sit in a rail on the left, beside the map. */
-  @media (min-width: 900px) { .step { align-items: center; justify-content: flex-start; padding: 0 0 0 32px; } }
+  @media (min-width: 900px) { .map-embed .step { align-items: center; justify-content: flex-start; padding: 0 0 0 32px; } }
 
-  #legend {
+  .map-embed #legend {
     position: absolute;
     top: 16px;
     z-index: 1;
@@ -70,40 +97,40 @@
     color: var(--ink-2);
     transition: opacity 0.6s, visibility 0.6s;
   }
-  #legend.hidden { opacity: 0; visibility: hidden; }
-  .legend-group { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 16px; }
-  .legend-color { display: flex; align-items: center; gap: 6px; }
-  .legend-color .dot { width: 12px; height: 12px; border-radius: 50%; }
-  .legend-color.outside .dot { background: color-mix(in srgb, var(--outside) 50%, transparent); border: 1px solid var(--outside); }
-  .legend-color.new-york .dot { background: color-mix(in srgb, var(--new-york) 50%, transparent); border: 1px solid var(--new-york); }
-  .legend-size { display: block; overflow: visible; }
-  .legend-size circle { fill: none; stroke: var(--ink-2); stroke-width: 1; }
-  .legend-size line { stroke: var(--ink-2); stroke-width: 1; }
-  .legend-size text { fill: var(--ink-2); font-size: 12px; }
+  .map-embed #legend.hidden { opacity: 0; visibility: hidden; }
+  .map-embed .legend-group { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 16px; }
+  .map-embed .legend-color { display: flex; align-items: center; gap: 6px; }
+  .map-embed .legend-color .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .map-embed .legend-color.outside .dot { background: color-mix(in srgb, var(--outside) 50%, transparent); border: 1px solid var(--outside); }
+  .map-embed .legend-color.new-york .dot { background: color-mix(in srgb, var(--new-york) 50%, transparent); border: 1px solid var(--new-york); }
+  .map-embed .legend-size { display: block; overflow: visible; }
+  .map-embed .legend-size circle { fill: none; stroke: var(--ink-2); stroke-width: 1; }
+  .map-embed .legend-size line { stroke: var(--ink-2); stroke-width: 1; }
+  .map-embed .legend-size text { fill: var(--ink-2); font-size: 12px; }
 
-  .land path { fill: var(--land); }
-  .districts path { fill: none; stroke: var(--district); stroke-width: 0.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
-  .states path { fill: none; stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
-  .highlight { transition: opacity 0.6s; }
-  .highlight.hidden { opacity: 0; }
-  .highlight path { fill: var(--ink); fill-opacity: 0.08; stroke: var(--ink); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
-  .inset-frame { fill: none; stroke: var(--district); stroke-width: 1; vector-effect: non-scaling-stroke; }
-  .inset-label { fill: var(--ink-2); font-size: 11px; text-anchor: middle; pointer-events: none; }
-  .marks { transition: opacity 0.6s; }
-  .marks.hidden { opacity: 0; }
-  .mark { fill-opacity: 0.5; stroke-width: 0.75; pointer-events: none; }
-  .mark.outside { fill: var(--outside); stroke: var(--outside); }
-  .mark.new-york { fill: var(--new-york); stroke: var(--new-york); }
-  .mark.spotlight { fill-opacity: 0.85; stroke: var(--ink); stroke-width: 2; }
-  .mark.active { fill-opacity: 0.85; stroke: var(--ink); stroke-width: 1; }
+  .map-embed .land path { fill: var(--land); }
+  .map-embed .districts path { fill: none; stroke: var(--district); stroke-width: 0.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .map-embed .states path { fill: none; stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .map-embed .highlight { transition: opacity 0.6s; }
+  .map-embed .highlight.hidden { opacity: 0; }
+  .map-embed .highlight path { fill: var(--ink); fill-opacity: 0.08; stroke: var(--ink); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .map-embed .inset-frame { fill: none; stroke: var(--district); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .map-embed .inset-label { fill: var(--ink-2); font-size: 11px; text-anchor: middle; pointer-events: none; }
+  .map-embed .marks { transition: opacity 0.6s; }
+  .map-embed .marks.hidden { opacity: 0; }
+  .map-embed .mark { fill-opacity: 0.5; stroke-width: 0.75; pointer-events: none; }
+  .map-embed .mark.outside { fill: var(--outside); stroke: var(--outside); }
+  .map-embed .mark.new-york { fill: var(--new-york); stroke: var(--new-york); }
+  .map-embed .mark.spotlight { fill-opacity: 0.85; stroke: var(--ink); stroke-width: 2; }
+  .map-embed .mark.active { fill-opacity: 0.85; stroke: var(--ink); stroke-width: 1; }
 
   /* The note stays pinned to the bottom of the sticky map, below the area the map fits into. */
-  .note { position: absolute; bottom: 12px; right: 16px; margin: 0; color: #9b9ba0; font-size: 13px; pointer-events: none; transition: opacity 0.6s, visibility 0.6s; }
-  .note.hidden { opacity: 0; visibility: hidden; }
+  .map-embed .note { position: absolute; bottom: 12px; right: 16px; margin: 0; color: #9b9ba0; font: 13px/1.45 Roboto, sans-serif; pointer-events: none; transition: opacity 0.6s, visibility 0.6s; }
+  .map-embed .note.hidden { opacity: 0; visibility: hidden; }
 
-  #tooltip {
+  .map-embed #tooltip {
     position: fixed;
-    z-index: 10;
+    z-index: 1001;
     max-width: 280px;
     padding: 8px 10px;
     border-radius: 6px;
@@ -114,24 +141,25 @@
     pointer-events: none;
     visibility: hidden;
   }
-  #tooltip strong, #tooltip span { display: block; }
+  .map-embed #tooltip strong, .map-embed #tooltip span { display: block; }
 
   @media (forced-colors: active) {
-    .mark.outside { fill: CanvasText; stroke: CanvasText; }
-    .mark.new-york { fill: Canvas; stroke: CanvasText; }
-    .highlight path { stroke: Highlight; }
-    .legend-color .dot { forced-color-adjust: none; border: 2px solid CanvasText; opacity: 1; }
-    .legend-color.outside .dot { background: CanvasText; }
-    .legend-color.new-york .dot { background: Canvas; }
-    .legend-size circle { fill: none; stroke: CanvasText; }
-    .legend-size line { stroke: CanvasText; }
-    .legend-size text { fill: CanvasText; }
+    .map-embed .mark.outside { fill: CanvasText; stroke: CanvasText; }
+    .map-embed .mark.new-york { fill: Canvas; stroke: CanvasText; }
+    .map-embed .highlight path { stroke: Highlight; }
+    .map-embed .legend-color .dot { forced-color-adjust: none; border: 2px solid CanvasText; opacity: 1; }
+    .map-embed .legend-color.outside .dot { background: CanvasText; }
+    .map-embed .legend-color.new-york .dot { background: Canvas; }
+    .map-embed .legend-size circle { fill: none; stroke: CanvasText; }
+    .map-embed .legend-size line { stroke: CanvasText; }
+    .map-embed .legend-size text { fill: CanvasText; }
   }
 </style>
 </head>
 <body>
-<main id="scrolly">
-  <div class="graphic">
+<div class="map-embed">
+<div id="scrolly">
+  <div class="map-sticky">
     <div id="legend" class="hidden"></div>
     <div id="map"></div>
     <p class="note hidden">Note: Only individual contributors are shown, and three donors with blank addresses were excluded.</p>
@@ -144,10 +172,12 @@
     <section class="step"><div class="card"><p>Chakrabarti, who is based in San Francisco, donated $7,000 directly to Avila Chevalier over the course of her campaign, according to campaign finance records. Justice Democrats, based in Centreville, Virginia, contributed thousands of dollars to the democratic socialist.</p></div></section>
     <section class="step"><div class="card"><p>Avila Chevalier’s team did not respond to a request for comment on the role of out-of-state support for her campaign or money from super PACs like American Priorities.</p></div></section>
   </div>
-</main>
+</div>
 <div id="tooltip" aria-hidden="true"></div>
+</div>
 
 <script>
+(() => {
   // Built from Campaign Funding - chevalier top donors.csv and inlined so the page also works when opened directly
   // from disk. Each ZIP is [lon, lat] at a point inside its area in cb_2020_us_zcta520_500k. Each donor is
   // [zip, amount, in New York]. ZIPs with no area of their own sit at the closest ZIP listed in `nearby`.
@@ -223,7 +253,7 @@
 
   const tooltip = d3.select("#tooltip");
   const legend = d3.select("#legend");
-  const note = d3.select(".note");
+  const note = d3.select(".map-embed .note");
   const map = d3.select("#map");
   const svg = map.append("svg")
     .attr("role", "img")
@@ -343,17 +373,26 @@
     // On phones and tablets the cards cover the lower part of the screen, so the map fits into the upper part.
     const area = [[rail, top], [width - 16, wide ? bottom : top + (bottom - top) * 0.55]];
 
+    // The Virgin Islands sit in their own inset at the bottom right, on their own scale.
+    const insetWidth = Math.max(84, (area[1][0] - area[0][0]) * 0.13);
+    const insetHeight = insetWidth * 0.62;
+    // On phones and tablets the inset is too big to tuck beside Florida, so the lower 48 fit above a strip held for it,
+    // with room in between for the inset's label.
+    const INSET_GAP = 18;
+    const fitArea = wide ? area : [area[0], [area[1][0], area[1][1] - insetHeight - INSET_GAP]];
+
     const projection = d3.geoAlbers()
       .rotate([96, 0])
       .center([-0.6, 38.7])
       .parallels([29.5, 45.5])
-      .fitExtent(area, land);
+      .fitExtent(fitArea, land);
     const path = d3.geoPath(projection);
 
-    // The Virgin Islands sit in their own inset at the bottom right, on their own scale.
-    const insetWidth = Math.max(84, (area[1][0] - area[0][0]) * 0.13);
-    const insetHeight = insetWidth * 0.62;
-    const inset = { x: area[1][0] - insetWidth, y: area[1][1] - insetHeight };
+    const landBottom = path.bounds(land)[1][1];
+    const inset = {
+      x: area[1][0] - insetWidth,
+      y: wide ? area[1][1] - insetHeight : Math.min(landBottom + INSET_GAP, area[1][1] - insetHeight)
+    };
     const islandProjection = d3.geoMercator().fitExtent(
       [[inset.x + 6, inset.y + 6], [inset.x + insetWidth - 6, inset.y + insetHeight - 6]],
       islands
@@ -412,7 +451,7 @@
       for (const region of regions) {
         const shown = corners.every(p => d3.polygonContains(region.outline, p));
         region.layer.style("display", shown ? null : "none");
-        detailed ||= shown;
+        detailed = detailed || shown;
       }
       coarseLayer.style("display", detailed ? "none" : null);
     }
@@ -477,7 +516,7 @@
 
   // On wide screens a step takes over once the top of its card passes 65% of the way down the screen. On phones and
   // tablets the cards stop low, so a step takes over once its whole card has scrolled into view above the note.
-  const cards = [...document.querySelectorAll(".step .card")];
+  const cards = [...document.querySelectorAll(".map-embed .step .card")];
   function isShown(card) {
     const { top, bottom } = card.getBoundingClientRect();
     return WIDE.matches ? top < window.innerHeight * 0.65 : bottom < window.innerHeight - 40;
@@ -501,6 +540,7 @@
   });
   showStep(false);
   onScroll();
+})();
 </script>
 </body>
 </html>

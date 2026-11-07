@@ -182,9 +182,11 @@
         "date": "November 7, 2026",
         "byline": "By <a href=\"https://www.columbiaspectator.com/contributors/katharine-lee/\">Katharine Lee</a>",
         "byline2": "Graphics by <a href=\"https://www.columbiaspectator.com/contributors/sita-vemuri/\">Sita Vemuri</a>",
+        "cover_asset": "https://cloudfront-us-east-1.images.arcpublishing.com/spectator/OSY7TN62JFBBXDQIVIRWZEPHOE.jpg",
+        "cover_caption": "Conor Cavens / Columbia Daily Spectator",
         "USE_NEWS_NAV": true,
         "USE_EYE_NAV": false,
-        "USE_COVER_HED": false,
+        "USE_COVER_HED": true,
         "IS_EMBED": false,
         "DOC_URL": "https://docs.google.com/document/d/1EKoqNLd4ceYA9H6ltiKJvMPq12QhBOZHaB0DHQdlrJM/edit?tab=t.0"
       }
